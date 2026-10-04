@@ -1,0 +1,15 @@
+{
+  "repository": "https://github.com/Py-KMS-Organization/py-kms",
+  "commit": "b0e1615dec06293c927625006a99e6ec54a001aa",
+  "sha256": {
+    "v4-request.bin": "b7276793d9272e917f90b0940dfacf7240c23fbb39d897111687880e88fd85fa",
+    "v4-response-base.bin": "d570c49303c253fdca31c953655fe665f036e21bc561017575e3fbe714899ce1",
+    "v4-response.bin": "79f48944ba97e1afe30b82dc7b468f518824c2c1dd75851b329eea932872b097",
+    "v5-request.bin": "ddf27e355a4880b59fe2ea5d7dac6917500ef462e72e392f37c33590c8647cd6",
+    "v5-response-base.bin": "5f542589a99f3855f058e53469506b72156d6cad6b40fad194b096d7b8aed5bd",
+    "v5-response.bin": "a2abf3f33f599ded1ab9304b7f838027e344b4aab3174ccc4b9b515575f88601",
+    "v6-request.bin": "3039529f0f6a41c421c66a56d6d9dd8ec31cc8c51de55df5e29e1106e6dba5be",
+    "v6-response-base.bin": "4ad3a085c1cb51f624a78b8ca56eacb85cbc575d1e24fc36906497292939a569",
+    "v6-response.bin": "5591cdd7dc812276f4d7dd837e9456c2276d384bfff6958c810105b6cce5e240"
+  }
+}

@@ -1,0 +1,16 @@
+[package]
+name = "vlmcsd-protocol"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "no_std KMS V4/V5/V6 codecs and crypto with alloc"
+
+[dependencies]
+aes.workspace = true
+thiserror.workspace = true
+sha2.workspace = true
+hmac.workspace = true
+subtle.workspace = true
+
+[lints]
+workspace = true

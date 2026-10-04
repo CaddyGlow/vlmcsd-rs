@@ -1,0 +1,47 @@
+Rust reference
+==============
+Source: https://github.com/mingtsay/vlmcsd-rs
+Revision: 010300220fa2aba848a45ce8073ae3e19869d8de
+Upstream declares MIT in its README and workspace manifest.
+
+crates/vlmcsd-protocol/src/aes.rs adapts the upstream vlmcsd-crypto/src/aes.rs, including its
+NIST and KMS variant tests. The port removes unsafe native-endian key mutation,
+uses fixed-size array chunks, and replaces CBC/MAC buffer handling.
+crates/vlmcsd/tests/async_server.rs adapts the request/bind layout and three-version roundtrip
+coverage from upstream vlmcsd-network/tests/integration.rs to Tokio, ephemeral
+ports, joined task lifetimes, NDR64, and independent Python fixtures.
+Copyright remains with mingtsay/vlmcsd-rs contributors and respective authors.
+Upstream credits Wind4/vlmcsd and its contributors as its protocol source.
+
+MIT License
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+Independent references
+======================
+Python: https://github.com/Py-KMS-Organization/py-kms
+Revision: b0e1615dec06293c927625006a99e6ec54a001aa
+The repository LICENSE is the Unlicense. Its pykms_Aes.py separately carries
+Apache-2.0 notices for SlowAES and its contributors. No Python implementation
+source is vendored here. scripts/pykms_interop.py imports a user-supplied
+checkout; fixtures are generated protocol bytes with synthetic client data.
+
+C: https://github.com/Wind4/vlmcsd
+Revision used for interoperability: 70e03572b254688b8c3557f898e7ebd765d29ae1
+The C client is built externally and is not vendored or linked into this crate.
