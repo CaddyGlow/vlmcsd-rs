@@ -248,6 +248,41 @@ This validation establishes interoperability with these references on Linux.
 Native Windows client activation, Windows service integration and cross-platform
 runtime behavior remain untested.
 
+## Benchmarks and fuzzing
+
+Run the dependency-free protocol microbenchmarks in release mode:
+
+```sh
+cargo bench --locked -p vlmcsd-protocol --bench protocol
+```
+
+Each V4/V5/V6 encode, respond and verify operation gets a warmup and a
+one-second measurement. Results report mean nanoseconds per operation; response
+generation reuses its output allocation. Host preparation, randomness, sockets
+and RPC transport are excluded. These are local timing estimates, not statistical
+regression tests. Compare runs on the same idle machine and toolchain.
+
+The separate `fuzz` package uses cargo-fuzz and libFuzzer with AddressSanitizer.
+Install cargo-fuzz and a nightly toolchain, then seed it with the independent
+protocol fixtures and run a bounded campaign from the repository root:
+
+```sh
+cargo install cargo-fuzz --locked
+rustup toolchain install nightly
+mkdir -p fuzz/corpus/protocol
+cp tests/fixtures/*request.bin tests/fixtures/*response.bin fuzz/corpus/protocol/
+cargo +nightly fuzz run protocol -- -max_total_time=60 -max_len=4096
+```
+
+The target exercises raw KMS request processing and response verification for
+all three versions, RPC headers, bind acknowledgements, and bound/unbound
+NDR32/NDR64 sessions. It also mutates valid RPC requests and responses to reach
+parsers beyond initial header checks. Fixed salts are for this offline harness.
+Crashes are saved under `fuzz/artifacts/protocol`; replay one with
+`cargo +nightly fuzz run protocol fuzz/artifacts/protocol/<artifact>`.
+Corpus and artifacts are ignored by Git; the fuzz dependency lockfile is tracked.
+A short successful campaign is a smoke test, not proof of correctness.
+
 ## Releases
 
 GitHub Actions checks Linux, Windows and macOS builds, feature configurations,

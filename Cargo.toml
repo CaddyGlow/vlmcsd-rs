@@ -1,6 +1,7 @@
 [workspace]
 members = ["crates/vlmcsd", "crates/vlmcs", "crates/vlmcsd-protocol"]
 resolver = "3"
+exclude = ["fuzz"]
 
 [workspace.package]
 version = "0.1.0"
