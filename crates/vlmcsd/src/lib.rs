@@ -19,6 +19,9 @@
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 
+/// Version of this library, as declared in `Cargo.toml`.
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+
 /// Blocking server with bounded worker threads.
 #[cfg(feature = "blocking")]
 pub mod blocking;

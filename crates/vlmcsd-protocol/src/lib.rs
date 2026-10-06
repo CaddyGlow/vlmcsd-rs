@@ -3,6 +3,9 @@
 #![no_std]
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
+/// Version of this library, as declared in `Cargo.toml`.
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+
 extern crate alloc;
 #[cfg(test)]
 extern crate std;

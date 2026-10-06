@@ -4,6 +4,9 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
+/// Version of this library, as declared in `Cargo.toml`.
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+
 #[cfg(feature = "async")]
 mod asynchronous;
 #[cfg(any(feature = "async", feature = "blocking"))]
