@@ -1,0 +1,12 @@
+Independent references
+======================
+Python: https://github.com/Py-KMS-Organization/py-kms
+Revision: b0e1615dec06293c927625006a99e6ec54a001aa
+The repository LICENSE is the Unlicense. Its pykms_Aes.py separately carries
+Apache-2.0 notices for SlowAES and its contributors. No Python implementation
+source is vendored here. scripts/pykms_interop.py imports a user-supplied
+checkout; fixtures are generated protocol bytes with synthetic client data.
+
+C: https://github.com/Wind4/vlmcsd
+Revision used for interoperability: 70e03572b254688b8c3557f898e7ebd765d29ae1
+The C client is built externally and is not vendored or linked into this crate.

@@ -3,6 +3,8 @@ name = "vlmcs"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
 description = "Async and blocking KMS V4/V5/V6 clients"
 
 [features]
@@ -32,7 +34,7 @@ clap = { workspace = true, optional = true }
 workspace = true
 
 [dev-dependencies]
-vlmcsd = { path = "../vlmcsd", default-features = false, features = ["async", "blocking"] }
+vlmcsd = { version = "0.1.0", path = "../vlmcsd", default-features = false, features = ["async", "blocking"] }
 tokio = { workspace = true, features = ["rt-multi-thread", "macros", "net", "io-util", "sync", "time", "process"] }
 
 [[test]]

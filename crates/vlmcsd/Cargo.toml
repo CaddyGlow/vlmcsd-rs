@@ -3,6 +3,8 @@ name = "vlmcsd"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
 description = "Async and blocking KMS V4/V5/V6 server"
 
 [features]

@@ -247,3 +247,20 @@ we reuse its protocol implementations as an independent oracle instead.
 This validation establishes interoperability with these references on Linux.
 Native Windows client activation, Windows service integration and cross-platform
 runtime behavior remain untested.
+
+## Releases
+
+GitHub Actions checks Linux, Windows and macOS builds, feature configurations,
+formatting, Clippy, and bare-metal `no_std` compilation on pushes to `main` and
+pull requests.
+
+To release, update the workspace version and the local dependency version
+requirements together, commit the changes, then push a matching `v<version>`
+tag (currently `v0.1.0`). The release workflow reruns CI, verifies the tag,
+packages all three crates and a source snapshot with its commit ID, and builds
+and tests both CLIs for Linux x86-64, Windows x86-64 and macOS ARM64. The GitHub release contains `.crate` packages,
+a source archive, binary archives with license notices, and `SHA256SUMS`.
+Tags containing a hyphen create prereleases. This workflow does not publish to crates.io.
+
+Each crate includes copies of the root `LICENSE` and `THIRD-PARTY-NOTICES`;
+keep these copies synchronized when changing the originals. CI checks them.

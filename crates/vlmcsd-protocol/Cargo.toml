@@ -3,6 +3,8 @@ name = "vlmcsd-protocol"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
 description = "no_std KMS V4/V5/V6 codecs and crypto with alloc"
 
 [dependencies]

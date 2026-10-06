@@ -6,9 +6,11 @@ resolver = "3"
 version = "0.1.0"
 edition = "2024"
 license = "MIT"
+repository = "https://github.com/CaddyGlow/vlmcsd-rs"
+rust-version = "1.96"
 
 [workspace.dependencies]
-vlmcsd-protocol = { path = "crates/vlmcsd-protocol" }
+vlmcsd-protocol = { version = "0.1.0", path = "crates/vlmcsd-protocol" }
 aes = { version = "0.9.3", default-features = false, features = ["hazmat"] }
 tokio = "1.53.2"
 thiserror = { version = "2.0.21", default-features = false }

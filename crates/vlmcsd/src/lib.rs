@@ -11,7 +11,7 @@
 //! # async fn example() -> Result<(), Box<dyn std::error::Error>> {
 //! let listener = tokio::net::TcpListener::bind("127.0.0.1:1688").await?;
 //! vlmcsd::serve(listener, vlmcsd::ServerConfig::default(), async {
-//!     let _ = tokio::signal::ctrl_c().await;
+//!     std::future::pending::<()>().await; // Supply your application shutdown signal.
 //! }).await?;
 //! # Ok(()) }
 //! ```
