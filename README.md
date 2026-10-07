@@ -295,7 +295,14 @@ tag (currently `v0.1.0`). The release workflow reruns CI, verifies the tag,
 packages all three crates and a source snapshot with its commit ID, and builds
 and tests both CLIs for Linux x86-64, Windows x86-64 and macOS ARM64. The GitHub release contains `.crate` packages,
 a source archive, binary archives with license notices, and `SHA256SUMS`.
-Tags containing a hyphen create prereleases. This workflow does not publish to crates.io.
+Tags containing a hyphen create prereleases. After validation and binary builds
+succeed, the workflow also publishes all three crates to crates.io using Trusted
+Publishing, without a long-lived API token.
+
+Before using automated publishing, publish each crate's first version with a
+crates.io API token, then configure a Trusted Publisher for each crate with the
+GitHub repository `CaddyGlow/vlmcsd-rs`, workflow `release.yml`, and environment
+`release`. The GitHub `release` environment must allow matching `v*` tags.
 
 Each crate includes copies of the root `LICENSE` and `THIRD-PARTY-NOTICES`;
 keep these copies synchronized when changing the originals. CI checks them.

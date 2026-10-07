@@ -55,17 +55,22 @@ pub fn serve(
             Ok((mut socket, peer)) => {
                 socket.set_nonblocking(false)?;
                 let control = socket.try_clone()?;
+                let cancel = Arc::new(AtomicBool::new(false));
+                let worker_cancel = Arc::clone(&cancel);
                 let config = Arc::clone(&config);
                 let host = Arc::clone(&host);
                 let handle = thread::Builder::new()
                     .name("vlmcsd-connection".into())
                     .spawn(move || {
-                        if let Err(error) = run_connection(&mut socket, port, &config, &host) {
+                        if let Err(error) =
+                            run_connection(&mut socket, port, &config, &host, Some(&worker_cancel))
+                        {
                             tracing::debug!(%peer,%error,"connection closed");
                         }
                     })?;
                 workers.0.push(Worker {
                     socket: control,
+                    cancel,
                     handle: Some(handle),
                 });
             }
@@ -88,7 +93,7 @@ pub fn serve(
                 .min(Duration::from_millis(10)),
         );
     }
-    // Closing the sockets interrupts blocking reads/writes; join all workers.
+    // Cancel pending I/O and shut down the sockets, then join all workers.
     workers.stop()
 }
 
@@ -98,7 +103,7 @@ pub fn serve_connection(stream: &mut TcpStream, config: &ServerConfig) -> Result
     validate(config)?;
     let host = PreparedHost::new(&config.host)?;
     stream.set_nonblocking(false)?;
-    run_connection(stream, stream.local_addr()?.port(), config, &host)
+    run_connection(stream, stream.local_addr()?.port(), config, &host, None)
 }
 fn validate(config: &ServerConfig) -> Result<(), Error> {
     if config.exchange_timeout.is_zero() {
@@ -117,6 +122,7 @@ fn run_connection(
     port: u16,
     config: &ServerConfig,
     host: &PreparedHost,
+    cancel: Option<&AtomicBool>,
 ) -> Result<(), Error> {
     let mut session = Session::new(port);
     for _ in 0..config.max_exchanges.get() {
@@ -126,6 +132,7 @@ fn run_connection(
         let mut stream = Deadline {
             stream: socket,
             deadline,
+            cancel,
         };
         let Some(first) = receive(&mut stream)? else {
             return Ok(());
@@ -165,6 +172,7 @@ fn receive(stream: &mut Deadline<'_>) -> Result<Option<Pdu>, Error> {
 
 struct Worker {
     socket: TcpStream,
+    cancel: Arc<AtomicBool>,
     handle: Option<JoinHandle<()>>,
 }
 struct Workers(Vec<Worker>);
@@ -192,6 +200,7 @@ impl Workers {
     }
     fn stop(&mut self) -> Result<(), Error> {
         for worker in &self.0 {
+            worker.cancel.store(true, Ordering::Release);
             let _ = worker.socket.shutdown(Shutdown::Both);
         }
         let mut panicked = false;
@@ -216,9 +225,16 @@ impl Drop for Workers {
 struct Deadline<'a> {
     stream: &'a mut TcpStream,
     deadline: Instant,
+    cancel: Option<&'a AtomicBool>,
 }
 impl Deadline<'_> {
     fn remaining(&self) -> std::io::Result<Duration> {
+        if self.cancel.is_some_and(|flag| flag.load(Ordering::Acquire)) {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::ConnectionAborted,
+                "server stopped",
+            ));
+        }
         self.deadline
             .checked_duration_since(Instant::now())
             .filter(|d| !d.is_zero())
@@ -226,17 +242,47 @@ impl Deadline<'_> {
                 std::io::Error::new(std::io::ErrorKind::TimedOut, "exchange deadline expired")
             })
     }
+    fn io_timeout(&self) -> std::io::Result<Duration> {
+        let remaining = self.remaining()?;
+        // Winsock shutdown may leave a blocking operation pending. Poll the
+        // cancellation flag without shortening the complete exchange deadline.
+        Ok(if self.cancel.is_some() {
+            remaining.min(Duration::from_millis(50))
+        } else {
+            remaining
+        })
+    }
 }
 impl Read for Deadline<'_> {
     fn read(&mut self, bytes: &mut [u8]) -> std::io::Result<usize> {
-        self.stream.set_read_timeout(Some(self.remaining()?))?;
-        self.stream.read(bytes)
+        loop {
+            self.stream.set_read_timeout(Some(self.io_timeout()?))?;
+            match self.stream.read(bytes) {
+                Err(error)
+                    if self.cancel.is_some()
+                        && matches!(
+                            error.kind(),
+                            std::io::ErrorKind::TimedOut | std::io::ErrorKind::WouldBlock
+                        ) => {}
+                result => return result,
+            }
+        }
     }
 }
 impl Write for Deadline<'_> {
     fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
-        self.stream.set_write_timeout(Some(self.remaining()?))?;
-        self.stream.write(bytes)
+        loop {
+            self.stream.set_write_timeout(Some(self.io_timeout()?))?;
+            match self.stream.write(bytes) {
+                Err(error)
+                    if self.cancel.is_some()
+                        && matches!(
+                            error.kind(),
+                            std::io::ErrorKind::TimedOut | std::io::ErrorKind::WouldBlock
+                        ) => {}
+                result => return result,
+            }
+        }
     }
     fn flush(&mut self) -> std::io::Result<()> {
         self.stream.flush()
@@ -246,5 +292,43 @@ fn io_error(error: std::io::Error) -> Error {
     match error.kind() {
         std::io::ErrorKind::TimedOut | std::io::ErrorKind::WouldBlock => Error::Timeout,
         _ => Error::Io(error),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn cancellation_interrupts_pending_read_without_socket_shutdown() {
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let address = listener.local_addr().unwrap();
+        let cancel = Arc::new(AtomicBool::new(false));
+        let worker_cancel = Arc::clone(&cancel);
+        let peer = thread::spawn(move || {
+            let (mut socket, _) = listener.accept().unwrap();
+            // Wait across several polling intervals to verify that polling
+            // timeouts do not become exchange timeouts.
+            thread::sleep(Duration::from_millis(150));
+            socket.write_all(&[42]).unwrap();
+            thread::sleep(Duration::from_millis(150));
+            worker_cancel.store(true, Ordering::Release);
+            // Keep the socket open until the pending read has been canceled.
+            socket
+        });
+        let mut socket = TcpStream::connect(address).unwrap();
+        let mut stream = Deadline {
+            stream: &mut socket,
+            deadline: Instant::now() + Duration::from_secs(5),
+            cancel: Some(&cancel),
+        };
+        let mut byte = [0];
+        stream.read_exact(&mut byte).unwrap();
+        assert_eq!(byte, [42]);
+        let start = Instant::now();
+        let error = stream.read(&mut byte).unwrap_err();
+        assert_eq!(error.kind(), std::io::ErrorKind::ConnectionAborted);
+        assert!(start.elapsed() < Duration::from_secs(1));
+        drop(peer.join().unwrap());
     }
 }
