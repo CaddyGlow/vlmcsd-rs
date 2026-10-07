@@ -54,7 +54,7 @@ jobs:
           git -C vlmcsd-rs archive --format=tar --output="$RUNNER_TEMP/vlmcsd-rs.tar" HEAD
           tar -xf "$RUNNER_TEMP/vlmcsd-rs.tar" -C "dist/$directory/vlmcsd-rs"
           tar -czf "dist/$directory.tar.gz" -C dist "$directory"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: release-package
           path: |
@@ -133,7 +133,7 @@ jobs:
           with tarfile.open(f"dist/{directory}.tar.gz", "w:gz") as archive:
               archive.add(output, arcname=directory)
           PY
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: release-${{ matrix.target }}
           path: vlmcsd-rs/dist/*.tar.gz
@@ -148,7 +148,7 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           path: vlmcsd-rs
       - uses: dtolnay/rust-toolchain@1.96.0
@@ -164,7 +164,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           pattern: release-*
           merge-multiple: true
